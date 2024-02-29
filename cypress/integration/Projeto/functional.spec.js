@@ -1,21 +1,56 @@
 /// <reference types="cypress" />
 
+import loc from '../../support/locators'
+import '../../support/commandsConta'
+
 describe("Should test at a functional level", () => {
-    beforeEach(() => {
-        cy.visit('https://barrigareact.wcaquino.me/')
-            cy.get('[data-test=email]').type('matheusipsnobre@gmail.com')
-            cy.get('[data-test=passwd]').type('1')
-            cy.get('.btn').click()
-            cy.get('.toast-message').should('contain', 'Bem vindo')
+    before(() => {
+        cy.login('matheusipsnobre@gmail.com', '1')
+        cy.resetApp()
     })
 
     it('Should create an account',()=>{
-        cy.get('[data-test=menu-settings] > .fas').click()
-        cy.get('[href="/contas"]').click()
-        cy.get('[data-test=nome]').type('Conta teste')
-        cy.get('.btn').click()
-        cy.get('.toast-message').should('contain', 'Conta inserida com sucesso')
+        cy.acessarMenuConta()
+        cy.inserirConta('Conta teste')
+        cy.get(loc.MESSAGE).should('contain', 'Conta inserida com sucesso')
+    })
 
+    it('Should update an account', () => {
+        cy.acessarMenuConta()
+        cy.xpath(loc.CONTAS.XP_BTN_ALTERAR).click()
+        cy.get(loc.CONTAS.NOME)
+            .clear()
+            .type('Conta alterada')
+        cy.get(loc.CONTAS.BTN_SALVAR).click()
+        cy.get(loc.MESSAGE).should('contain', 'Conta atualizada com sucesso') 
+    })
 
+    it('Should not create an account with same name', () => {
+        cy.acessarMenuConta()
+        cy.inserirConta('Conta alterada')
+
+        cy.get(loc.CONTAS.BTN_SALVAR).click()
+        cy.get(loc.MESSAGE).should('contain', 'code 400') 
+    })
+
+    it('Should create a transaction', () => {
+        cy.get(loc.MENU.MOVIMENTACAO).click()
+
+        cy.get(loc.MOVIMENTACAO.DESCRICAO).type('Desc')
+        cy.get(loc.MOVIMENTACAO.VALOR).type('123')
+        cy.get(loc.MOVIMENTACAO.INTERRESSADO).type('Inter')
+        cy.get(loc.MOVIMENTACAO.CONTA).select('Conta alterada')
+        cy.get(loc.MOVIMENTACAO.STATUS).click()
+        cy.get(loc.MOVIMENTACAO.BTN_SALVAR).click()
+        cy.get(loc.MESSAGE).should('contain', 'sucesso')
+
+        cy.get(loc.EXTRATO.LINHAS).should('have.length', 7)
+        cy.xpath(loc.EXTRATO.XP_BUSCA_ELEMENTO).should('exist')
+    })
+
+    it('Should get balance', () => {
+        //cy.get(loc.MENU.HOME).click()
+        //cy.get('[data-test=menu-home] > .fas').click()
+        //cy.xpath(loc.SALDO.FN_XP_SALDO_CONTA('Conta alterada')).should('contain', '123,00')
     })
 })
